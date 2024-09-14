@@ -6,13 +6,17 @@ import os
 import time 
 import json
 import urllib
+import random
 import requests
 import selenium.webdriver as webdriver
+from requests_html import HTMLSession
 from bs4 import BeautifulSoup
 from urlextract import URLExtract
 
 # Image Extraction
 extractor = URLExtract()
+# HTML Sessions
+session = HTMLSession()
 # News Websites
 websites = {
 	'New York Times':'https://www.nytimes.com', 
@@ -24,15 +28,15 @@ websites = {
 	'Politico':'https://www.politico.com', 
 	'ABC News':'https://abcnews.go.com', 
 	'Boston Globe':'https://www.bostonglobe.com', 
-	'MSNBC News':'https://www.msnbc.com'
-}
+	'MSNBC News':'https://www.msnbc.com'}
 
 # Article Object
 class Article:
-  def __init__(self, image, headline, content):
-    self.image = image
-    self.headline = headline
-    self.content = content
+	def __init__(self, headline, content, image, link):
+		self.headline = headline
+		self.content = content
+		self.image = image
+		self.link = link
 
 # Extraction Function
 def extractContent():
@@ -45,13 +49,14 @@ def extractContent():
 		number += 1
 	# grabs headlines from each website
 	for website, url in websites.items():
+		# array which will store Article Objects
+		storage = []
 		# webscrape from new york times
 		if website == 'New York Times':
 			# try grab each headline
 			try:
-				# empty arrays
-				headlines = []
-				avoid = ["movies", "games"]
+				# articles to avoid
+				avoid = ["nyregion", "upshot", "opinion", "movies", "fashion", "games", "arts"]
 				# access website
 				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
 				# grabs all tags with story wrapper until reaching duplicate
@@ -60,51 +65,25 @@ def extractContent():
 				for story in stories:
 					try: 
 						grabUrl = story.find('a')['href']
-						# check if it ends in html
-						pattern = "|".join(avoid)
-						if grabUrl.endswith(".html") and not re.search(pattern, grabUrl) :
-							headlines.append(grabUrl)
-					except: 
+						# check if article is valid
+						if not grabUrl.endswith(".html") or re.search("|".join(avoid), grabUrl):
+							continue
+						# grab all content
+						headline = story.find('p', class_='indicate-hover').text
+						# check whether this has any associated text and add it 
+						try: 
+							content = story.find('p', class_='summary-class').text
+						except: 
+							pass
+						img = 0
+						# append object
+						storage.append(Article(headline,content,img,grabUrl))
+					except Exception as e: 
+						print(e) 
 						pass
-				print(headlines)
-			# except 
-			except: 
+			except Exception as e: 
+				print(e) 
 				pass
-
-				'''
-				# Grab Images from either Main or Gallery
-				if soup.find('div',class_='art-view-gallery'):
-					# Extract the list of Images
-					imgs = extractor.find_urls(str(soup.find('div',class_='art-view-gallery').find('script',src=None)).replace('\\',''))
-					# Remove non Pngs or Jpgs
-					imgs = [ x for x in img if re.search('(.png|.jpg)',x)]
-				else:
-					imgs = [soup.find('div',class_='image').find('img')['src']]
-					stored_content["images"] = imgs 
-					# Grab Descriptions if they Exist
-					try: 
-						second = soup.find('div',id="author_comments")
-						# Check if Text is Filled
-						if not second.text == '':
-						stored_content["description"] = second.text
-						# Check if Extra Images
-						if second.find('img')['data-smartload-src']:
-							stored_content["images"].append(second.find('img')['data-smartload-src'])
-					except: 
-				pass
-			# Grab Author Information
-			author = soup.find('div',class_='item-user').find('a')['href']
-			author = author.replace('https://','').replace('.newgrounds.com','')
-			author_pfp = soup.find('div',class_='item-user').find('image')['href']
-			stored_content["author"] = author
-			stored_content["author_pfp"] = author_pfp
-	except Exception as error:
-		print('Unable to Extract Content')
-		print(error)
-		return error
-	'''
-
+			# add new york times articles
+			stored_content[website] = storage
 	return stored_content
-
-# Test
-extractContent()

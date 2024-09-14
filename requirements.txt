@@ -1,5 +1,7 @@
+lxml_html_clean
 beautifulsoup4
 python-dotenv
+requests-html
 urlextract
 requests
 selenium
