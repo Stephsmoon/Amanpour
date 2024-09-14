@@ -2,6 +2,6 @@ beautifulsoup4
 python-dotenv
 transformers
 accelerate
-urllib
+urllib3
 openai
 torch
