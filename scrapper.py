@@ -160,6 +160,26 @@ def extract_content(url):
 			except: 
 				pass
 
+	if website == "ABC News":
+			try:
+				abc_headline = []
+				abc_soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
+				abc_stories = abc_soup.find_all('h4')
+				counter = 0
+				for h4 in abc_stories:
+					title_text = h4.get_text(strip=True)
+					counter += 1
+					link = abc_soup.find_all('a')
+					if link and link.get('herf'):
+						herf = link['herf']
+						print(f"Title: {title_text}")
+						print(f"Link: {href}")
+						print('---')
+						print(f"The Number of articles from Politico: {counter}")
+
+			except:
+				pass
+
 
 
 # Testing 
