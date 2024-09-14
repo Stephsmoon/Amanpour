@@ -1,4 +1,7 @@
 beautifulsoup4
 python-dotenv
+urlextract
+requests
+selenium
 urllib3
 openai

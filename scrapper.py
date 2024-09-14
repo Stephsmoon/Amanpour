@@ -19,12 +19,12 @@ websites = {
 	'New York Times':'https://www.nytimes.com', 
 	'Washington Post':'https://www.washingtonpost.com',
 	'CNN':'https://www.cnn.com', 
-	'NBC':'https://www.nbcnews.com' 
-	'USA Today':'https://www.usatoday.com' 
-	'Politico':'https://www.politico.com' 
-	'ABC News':'https://abcnews.go.com' 
-	'Boston Globe':'https://www.bostonglobe.com' 
-	'MSNBC News':'https://www.msnbc.com' 
+	'NBC':'https://www.nbcnews.com',
+	'USA Today':'https://www.usatoday.com', 
+	'Politico':'https://www.politico.com', 
+	'ABC News':'https://abcnews.go.com', 
+	'Boston Globe':'https://www.bostonglobe.com', 
+	'MSNBC News':'https://www.msnbc.com'
 }
 
 # Article Object
@@ -35,7 +35,7 @@ class Article:
     self.content = content
 
 # Extraction Function
-def extract_content(url):
+def extractContent(url):
 
 	# Datastructure which stores Article Ovjects
 	# ? Array or Dictionary
@@ -48,6 +48,7 @@ def extract_content(url):
 		number += 1
 
 	# Grabs Content from provided URL
+	'''
 	try:
 		images = []
 		# Webscrape from Newgrounds
@@ -86,9 +87,5 @@ def extract_content(url):
 		print('Unable to Extract Content')
 		print(error)
 		return error
+	'''
 	return stored_content
-
-# Testing 
-for website in websites:
-	result = extract_content(website)
-	print(result)
