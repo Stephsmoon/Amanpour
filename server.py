@@ -5,10 +5,21 @@
 
 from wrapper import *
 from scrapper import *
+from difflib import SequenceMatcher
+
+# Article Object
+class SummarizedArticle:
+	def __init__(self, headline, summary, images, links):
+		self.headline = headline
+		self.content = content
+		self.images = images
+		self.links = links
 
 # Backend Functions
 def obtainSummaries():
-	print(aiSummarize("Hello how are you"))
-	print(aiSummarize("I hate you go to hell"))
+	content = extractContent()
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
 
 obtainSummaries()

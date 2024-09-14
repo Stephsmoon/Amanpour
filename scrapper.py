@@ -79,10 +79,8 @@ def extractContent():
 						# append object
 						storage.append(Article(headline,content,img,grabUrl))
 					except Exception as e: 
-						print(e) 
 						pass
 			except Exception as e: 
-				print(e) 
 				pass
 			# add new york times articles
 			stored_content[website] = storage
