@@ -48,7 +48,7 @@ def extract_content(url):
 		number += 1
 
 	# Grabs Content from provided URL
-	try:
+	'''try:
 		images = []
 		# Webscrape from Newgrounds
 		if website in url: 
@@ -86,7 +86,46 @@ def extract_content(url):
 		print('Unable to Extract Content')
 		print(error)
 		return error
-	return stored_content
+	return stored_content'''
+
+	if website == 'Fox News':
+			# try grab each headline
+			try:
+				# empty arrays
+				headlines = []
+				# access website
+				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
+				# grabs all tags with story wrapper until reaching duplicate
+				stories = soup.find_all('h3')
+				print(stories)
+				counter = 0
+				for h3 in stories:
+					# gets the titles of each of the news headline
+					title_text = h3.get_text(strip=True)
+					counter += 1
+					# print(title_text)
+					# title_pic = h3.find('scr')
+					# img_src = img['img']
+
+					# gets the link for each of the headline
+					link = h3.find('a')
+					# checks for the hyperlink and then prints it
+					if link and link.get('href'):
+						href = link['href']
+						print(f"Title: {title_text}")
+						print(f"Link: {href}")
+						# print(f"Picture Link: {img_src}")
+						print('---')
+						print(f"The Number of articles from Fox: {counter}")
+				# for each story in stories
+				# print(stories)
+				
+			# except 
+			except: 
+				pass
+
+
+
 
 # Testing 
 for website in websites:
