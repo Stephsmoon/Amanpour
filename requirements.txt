@@ -1,0 +1,7 @@
+beautifulsoup4
+python-dotenv
+transformers
+accelerate
+urllib
+openai
+torch
