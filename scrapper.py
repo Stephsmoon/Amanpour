@@ -175,7 +175,7 @@ def extract_content(url):
 						print(f"Title: {title_text}")
 						print(f"Link: {href}")
 						print('---')
-						print(f"The Number of articles from Politico: {counter}")
+						print(f"The Number of articles from ABC News: {counter}")
 
 			except:
 				pass
