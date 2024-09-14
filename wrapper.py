@@ -11,7 +11,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv('OPENAI_TOKEN'))
 # intial message to chatgpt
 messages = [ {"role": "system", "content": 
-			  "You are a intelligent assistant."} ]
+			  "<SOMETHING>"} ]
 
 # Validation Error
 class validationError(Exception):
