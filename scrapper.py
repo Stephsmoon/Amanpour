@@ -180,6 +180,47 @@ def extract_content(url):
 			except:
 				pass
 
+	if website == "Washington Post":
+			try:
+				# articles to avoid
+				avoid = ["games, /Opinions/, NFL, /Sports/, /Advice/, Review, Climate"]
+				# access website
+				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
+				# grab all scripts
+				h2 = soup.find_all('span')
+				# extract the content of each script tag
+				h2_contents = [h2.string for h2 in h2 if h2.string]
+				h2_content = "\n".join(h2_contents)
+				# grab all stories
+				stories = re.findall(r'\{"web_headline":.*?\}', h2_content, re.DOTALL)
+				# for each story in stories
+				for story in stories:
+					try: 
+						grabUrl = story.find('a')['href']
+						if not "https:" in grabUrl:
+							grabUrl = "https:" + grabUrl
+						# check if article is valid
+						if re.search("|".join(avoid), grabUrl):
+							continue
+						# get headline of each of the article
+						headline = story.get_text(strip=True)						
+					except:
+						pass
+					try: 
+						soup = BeautifulSoup(urllib.request.urlopen(grabUrl),'html.parser')
+						# cleanup content
+						content = re.search(r'(?<="headline relative": ")(.*?)(?=CLICK TO GET THE WASHINTON POST )', soup.find('script', type='application/ld+json').string).group(0).strip()
+						content = re.sub(r'\\|&nbsp;', '', content).strip()
+					except: 
+						# return with empty content
+						storage.append(Article(headline,"",grabUrl))
+						pass
+					storage.append(Article(headline,content,grabUrl))
+			except Exception as e: 
+				print(e)
+				pass
+			stored_content[website] = storage
+
 
 
 # Testing 
