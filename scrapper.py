@@ -3,131 +3,175 @@
 
 import re
 import os
-import time 
 import json
 import urllib
 import requests
-import selenium.webdriver as webdriver
 from bs4 import BeautifulSoup
-from urlextract import URLExtract
 
-# Image Extraction
-extractor = URLExtract()
 # News Websites
 websites = {
-	'Fox News':'https://www.foxnews.com', 
 	'New York Times':'https://www.nytimes.com', 
+	'Fox News':'https://www.foxnews.com',
+	'ABC News':'https://abcnews.go.com', 
 	'Washington Post':'https://www.washingtonpost.com',
-	'CNN':'https://www.cnn.com', 
-	'NBC':'https://www.nbcnews.com' 
-	'USA Today':'https://www.usatoday.com' 
-	'Politico':'https://www.politico.com' 
-	'ABC News':'https://abcnews.go.com' 
-	'Boston Globe':'https://www.bostonglobe.com' 
-	'MSNBC News':'https://www.msnbc.com' 
-}
-
+	'CNN':'https://www.cnn.com'}
 # Article Object
 class Article:
-  def __init__(self, image, headline, content):
-    self.image = image
-    self.headline = headline
-    self.content = content
+	def __init__(self, headline, content, link):
+		self.headline = headline
+		self.content = content
+		self.link = link
+
+# Json Correction
+def fixjson(jsonString):
+	stack = []
+	fixed_string = ""
+	for char in jsonString:
+		if char in '{[':
+			stack.append(char)
+		elif char in '}]':
+			if stack:
+				if (stack[-1] == '{' and char == '}') or (stack[-1] == '[' and char == ']'):
+					stack.pop()
+				else:
+					continue
+			else:
+				continue
+		fixed_string += char
+	while stack:
+		last_open = stack.pop()
+		if last_open == '{':
+			fixed_string += '}'
+		elif last_open == '[':
+			fixed_string += ']'
+	return fixed_string
 
 # Extraction Function
-def extract_content(url):
-
-	# Datastructure which stores Article Ovjects
-	# ? Array or Dictionary
-	stored_content = []
-
-	# Obtain Unused File Name for Images
-	# ? specifically for storing images
-	number = 0
-	while os.path.exists(f"image{number}.png"):
-		number += 1
-
-	# Grabs Content from provided URL
-	'''try:
-		images = []
-		# Webscrape from Newgrounds
-		if website in url: 
-			# Accesses Image Website and Pulls Main Image
-			soup = BeautifulSoup(urllib.request.urlopen(url), 'html.parser')
-			# Grabs Title of Image
-			stored_content["title"] = soup.find('h2',itemprop="name").text
-			# Grab Images from either Main or Gallery
-			if soup.find('div',class_='art-view-gallery'):
-				# Extract the list of Images
-				imgs = extractor.find_urls(str(soup.find('div',class_='art-view-gallery').find('script',src=None)).replace('\\',''))
-				# Remove non Pngs or Jpgs
-				imgs = [ x for x in img if re.search('(.png|.jpg)',x)]
-			else:
-				imgs = [soup.find('div',class_='image').find('img')['src']]
-			stored_content["images"] = imgs 
-			# Grab Descriptions if they Exist
-			try: 
-				second = soup.find('div',id="author_comments")
-				# Check if Text is Filled
-				if not second.text == '':
-					stored_content["description"] = second.text
-				# Check if Extra Images
-				if second.find('img')['data-smartload-src']:
-					stored_content["images"].append(second.find('img')['data-smartload-src'])
-			except: 
-				pass
-			# Grab Author Information
-			author = soup.find('div',class_='item-user').find('a')['href']
-			author = author.replace('https://','').replace('.newgrounds.com','')
-			author_pfp = soup.find('div',class_='item-user').find('image')['href']
-			stored_content["author"] = author
-			stored_content["author_pfp"] = author_pfp
-	except Exception as error:
-		print('Unable to Extract Content')
-		print(error)
-		return error
-	return stored_content'''
-
-	if website == 'Fox News':
-			# try grab each headline
+def extractContent():
+	# dictionary which stores article objects
+	stored_content = {}
+	# grabs headlines from each website
+	for website, url in websites.items():
+		# array which will store Article Objects
+		storage = []
+		# webscrape from new york times
+		if website == 'New York Times':
 			try:
-				# empty arrays
-				headlines = []
+				# articles to avoid
+				avoid = ["upshot", "/opinion/", "/magazine/", "/movies/", "/fashion/", "/games/", "/arts/"]
 				# access website
 				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
-				# grabs all tags with story wrapper until reaching duplicate
-				stories = soup.find_all('h3')
-				print(stories)
-				counter = 0
-				for h3 in stories:
-					# gets the titles of each of the news headline
-					title_text = h3.get_text(strip=True)
-					counter += 1
-					# print(title_text)
-					# title_pic = h3.find('scr')
-					# img_src = img['img']
-
-					# gets the link for each of the headline
-					link = h3.find('a')
-					# checks for the hyperlink and then prints it
-					if link and link.get('href'):
-						href = link['href']
-						print(f"Title: {title_text}")
-						print(f"Link: {href}")
-						# print(f"Picture Link: {img_src}")
-						print('---')
-						print(f"The Number of articles from Fox: {counter}")
+				# grab all stories
+				stories = soup.find_all('section',class_="story-wrapper")
 				# for each story in stories
-				# print(stories)
-				
-			# except 
-			except: 
+				for story in stories:
+					try: 
+						grabUrl = story.find('a')['href']
+						# check if article is valid
+						if not grabUrl.endswith(".html") or re.search("|".join(avoid), grabUrl):
+							continue
+						# grab all content
+						headline = story.find('p', class_='indicate-hover').text
+						# check whether this has any associated text and add it 
+						try: 
+							content = story.find('p', class_='summary-class').text
+						except: 
+							pass
+						# append object
+						storage.append(Article(headline,content,grabUrl))
+					except: 
+						pass
+			except Exception as e: 
+				print(e)
 				pass
+			# add new york times articles
+			stored_content[website] = storage
+		# webscrape from fox news
+		if website == 'Fox News':
+			try:
+				# articles to avoid
+				avoid = ["/radio.", "outkick", "/opinion/", "/magazine/", "/video/", "/food-drink/", "/movies/", "/travel/", "/lifestyle/", "/health/", "/sports/", "/entertainment/", "/tech/", "/games", "/politics-cartoons-slideshow"]
+				# access website
+				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
+				# grab all stories
+				stories = soup.find_all('h3')
+				# for each story in stories
+				for story in stories:
+					try: 
+						grabUrl = story.find('a')['href']
+						if not "https:" in grabUrl:
+							grabUrl = "https:" + grabUrl
+						# check if article is valid
+						if re.search("|".join(avoid), grabUrl):
+							continue
+						# get headline of each of the article
+						headline = story.get_text(strip=True)						
+					except:
+						pass
+					try: 
+						soup = BeautifulSoup(urllib.request.urlopen(grabUrl),'html.parser')
+						# cleanup content
+						content = re.search(r'(?<="articleBody": ")(.*?)(?=CLICK TO GET THE FOX NEWS APP)', soup.find('script', type='application/ld+json').string).group(0).strip()
+						content = re.sub(r'\\|&nbsp;', '', content).strip()
+					except: 
+						# return with empty content
+						storage.append(Article(headline,"",grabUrl))
+						pass
+					storage.append(Article(headline,content,grabUrl))
+			except Exception as e: 
+				print(e)
+				pass
+			# add fox news articles
+			stored_content[website] = storage
+		# web scrap for ABC News
+		if website == "ABC News":
+			try:
+				# articles to avoid
+				avoid = ["/games/"]
+				# access website
+				soup = BeautifulSoup(urllib.request.urlopen(url),'html.parser')
+				# grab all scripts
+				scripts = soup.find_all('script')
+				# extract the content of each script tag
+				script_contents = [script.string for script in scripts if script.string]
+				script_content = "\n".join(script_contents)
+				# grab all stories
+				stories = re.findall(r'\{"headline":.*?\}', script_content, re.DOTALL)
+				# for each story in stories
+				for story in stories:
+					# json string
+					jsonString = fixjson(story.replace("'", '"'))
+ 					# try to parse
+					try:
+						# Parse the JSON-like string
+						jsonObj = json.loads(jsonString)
+						# Extract URL
+						grabUrl = jsonObj.get("link")
+						# Check if link has a href
+						if "href" in grabUrl:
+							grabUrl = grabUrl.get("href")
+						# check if article is valid
+						if re.search("|".join(avoid), grabUrl):
+							continue
+						# Extract the headline
+						headline = jsonObj.get("headline")
+					except json.JSONDecodeError:
+						print("Error decoding JSON:", jsonString)
+					try: 
+						soup = BeautifulSoup(urllib.request.urlopen(grabUrl),'html.parser')
+						# cleanup content
+						content = re.search(r'"body":"(.*?)(?<!\\)"', soup.find('script', text=re.compile(r'"body":')).string, re.DOTALL).group(1)
+						content = re.sub(r'<.*?>', '', content)					
+					except:
+						# return with empty content
+						storage.append(Article(headline,"",grabUrl))
+						pass
+					storage.append(Article(headline,content,grabUrl))
+			except Exception as e: 
+				print(e)
+				pass
+			# add abs news articles
+			stored_content[website] = storage
+	return stored_content
 
-
-
-
-# Testing 
-for website in websites:
-	result = extract_content(website)
-	print(result)
+extractContent()
